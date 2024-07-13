@@ -38,3 +38,5 @@ kubectl --context kind-infra-cluster get events --sort-by=.metadata.creationTime
 
 
 
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' infra-cluster-control-plane
+
