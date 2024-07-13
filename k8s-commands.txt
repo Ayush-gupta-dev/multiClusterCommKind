@@ -1,0 +1,40 @@
+kind load docker-image producer-service:latest --name buyer-seller-cluster
+kind load docker-image consumer-service:latest --name notification-cluster
+
+# Deploy RabbitMQ to infra-cluster
+kubectl --context kind-infra-cluster apply -f infra/k8s/infra/rabbitmq/deployment.yaml
+
+# Deploy producer service to buyer-seller-cluster
+kubectl --context kind-buyer-seller-cluster apply -f buyer-seller/k8s/producer-service/deployment.yaml
+
+# Deploy consumer service to notification-cluster
+kubectl --context kind-notification-cluster apply -f notification/k8s/consumer-service/deployment.yaml
+
+
+# Check logs for the producer service
+kubectl --context kind-buyer-seller-cluster logs -l app=producer-service
+
+# Check logs for the consumer service
+kubectl --context kind-notification-cluster logs -l app=consumer-service
+
+
+docker exec -it buyer-seller-cluster-control-plane crictl images
+
+
+kubectl --context kind-buyer-seller-cluster get pods
+kubectl --context kind-notification-cluster get pods
+kubectl --context kind-infra-cluster get pods
+
+
+kubectl --context kind-notification-cluster run test-consumer --image=alpine --rm -it -- /bin/sh
+# Inside the alpine container
+apk add curl
+curl rabbitmq-infra-cluster:5672
+
+
+kubectl --context kind-buyer-seller-cluster get events --sort-by=.metadata.creationTimestamp
+kubectl --context kind-notification-cluster get events --sort-by=.metadata.creationTimestamp
+kubectl --context kind-infra-cluster get events --sort-by=.metadata.creationTimestamp
+
+
+
